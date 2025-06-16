@@ -109,6 +109,7 @@ class balikobotbranches extends Module
 					$package_attr_set('rec_zip', $id_branch);		//
 				}
 			} else if (Module::isInstalled('shaim_balikovna')) {
+				// zde "type" neni treba parovat v query, jelikoz Balikovna ma pouze CZ a neresi se tam dalsi zeme
 				try {
 					$id_branch = Db::getInstance()->getValue('SELECT psc FROM '._DB_PREFIX_.'shaim_balikovna_data JOIN '._DB_PREFIX_.'orders USING(id_cart) WHERE id_order=' . (int)$order->id);
 				} catch(Exception $e) {}
@@ -123,37 +124,6 @@ class balikobotbranches extends Module
 						JOIN '._DB_PREFIX_.'add_cp_all_branches_B b ON o.id_branch = b.id
 						WHERE id_order=' . (int) $order->id
 					);
-				} catch(Exception $e) {}
-
-				if($id_branch) {
-					$package_attr_set('rec_zip', $id_branch);
-				}
-			}
-		}
-		else if ($carrierCode == 'cp' && $serviceType == 'NP'){
-			if (Module::isInstalled('monster_cpost')) {
-				try {
-					$id_branch = Db::getInstance()->getValue('SELECT zip FROM '._DB_PREFIX_.'monster_cpost_expedition WHERE id_order=' . (int) $order->id);
-				} catch(Exception $e) {}
-				
-				if($id_branch) {
-					$package_attr_set('rec_zip', $id_branch);
-				}
-			} else if (Module::isInstalled('add_ceskaposta_carriers')) {
-				try {
-					$id_branch = Db::getInstance()->getValue(
-						'SELECT psc FROM '._DB_PREFIX_.'add_cp_all_orders o
-						JOIN '._DB_PREFIX_.'add_cp_all_branches_NP b ON o.id_branch = b.id
-						WHERE id_order=' . (int) $order->id
-					);
-				} catch(Exception $e) {}
-
-				if($id_branch) {
-					$package_attr_set('rec_zip', $id_branch);
-				}
-			} else if (Module::isInstalled('shaim_baliknapostu')) {
-				try {
-					$id_branch = Db::getInstance()->getValue('SELECT psc FROM '._DB_PREFIX_.'shaim_baliknapostu_data JOIN '._DB_PREFIX_.'orders USING(id_cart) WHERE id_order=' . (int) $order->id);
 				} catch(Exception $e) {}
 
 				if($id_branch) {
@@ -176,7 +146,9 @@ class balikobotbranches extends Module
 			}
 			if(Module::isInstalled('shaim_dpdparcelshop')){
 				try {
-					$id_branch = Db::getInstance()->getValue('SELECT id FROM '._DB_PREFIX_.'shaim_dpdparcelshop_data JOIN '._DB_PREFIX_.'shaim_dpdparcelshop USING(id) JOIN '._DB_PREFIX_.'orders USING(id_cart) WHERE id_order=' . (int)$order->id);
+					$id_branch = Db::getInstance()->getValue('SELECT sdd.id FROM ' . _DB_PREFIX_ . 'shaim_dpdparcelshop_data sdd
+					INNER JOIN ' . _DB_PREFIX_ . 'shaim_dpdparcelshop sd ON (sdd.id = sd.id && sdd.type = sd.type)
+					JOIN ' . _DB_PREFIX_ . 'orders USING(id_cart) WHERE id_order=' . (int)$order->id);
 				} catch(Exception $e) {}
 				
 				if($id_branch) {
@@ -190,7 +162,9 @@ class balikobotbranches extends Module
 		else if ($carrierCode == 'gls' && in_array($serviceType, [ 2 ])){
 			if(Module::isInstalled('shaim_glsparcelshop')){
 				try {
-					$id_branch = Db::getInstance()->getValue('SELECT sgd.id FROM '._DB_PREFIX_.'shaim_glsparcelshop_data sgd JOIN '._DB_PREFIX_.'orders USING(id_cart) WHERE id_order=' . (int) $order->id );
+					$id_branch = Db::getInstance()->getValue('SELECT sgd.id FROM ' . _DB_PREFIX_ . 'shaim_glsparcelshop_data sgd
+					INNER JOIN ' . _DB_PREFIX_ . 'shaim_glsparcelshop sg ON (sgd.id = sg.id && sgd.type = sg.type)
+					JOIN ' . _DB_PREFIX_ . 'orders USING(id_cart) WHERE id_order=' . (int)$order->id);
 				} catch(Exception $e) {}
 
 				if($id_branch) {
@@ -204,10 +178,20 @@ class balikobotbranches extends Module
 		else if ($carrierCode == 'ulozenka' && in_array($serviceType, [ 1, 11 ])){
 			if(Module::isInstalled('shaim_ulozenka')){
 				try {
-					$id_branch = Db::getInstance()->getValue('SELECT id FROM '._DB_PREFIX_.'shaim_ulozenka_data JOIN '._DB_PREFIX_.'orders USING(id_cart) WHERE id_order=' . (int) $order->id);
+			$id_branch = Db::getInstance()->getValue('SELECT id FROM ' . _DB_PREFIX_ . 'shaim_ulozenka_data sud
+                    	INNER JOIN ' . _DB_PREFIX_ . 'shaim_ulozenka su ON (sud.id = su.id && sud.type = su.type)
+                    	JOIN ' . _DB_PREFIX_ . 'orders USING(id_cart) WHERE id_order=' . (int)$order->id);
 					$id_branch = str_replace('ID', '', $id_branch);
 				} catch(Exception $e) {}
-			} elseif(Module::isInstalled('monster_ulozenka')){
+			} elseif (Module::isInstalled('shaim_intime')) {
+                try {
+                    $id_branch = Db::getInstance()->getValue('SELECT sid.id FROM ' . _DB_PREFIX_ . 'shaim_intime_data sid
+                    INNER JOIN ' . _DB_PREFIX_ . 'shaim_intime si ON (sid.id = si.id && sid.type = si.type)
+                    JOIN ' . _DB_PREFIX_ . 'orders USING(id_cart) WHERE id_order=' . (int)$order->id);
+                    $id_branch = str_replace('ID', '', $id_branch);
+                } catch (Exception $e) {
+                }
+            }  elseif(Module::isInstalled('monster_ulozenka')){
 				try {
 					$id_branch = Db::getInstance()->getValue('SELECT id_ulozenka FROM '._DB_PREFIX_.'monster_ulozenka_expedition WHERE id_order=' . (int) $order->id);
 				} catch(Exception $e) {}
@@ -244,7 +228,9 @@ class balikobotbranches extends Module
 		else if ($carrierCode == 'ppl' && in_array($serviceType, [ 46, 48 ])){
 			if(Module::isInstalled('shaim_pplparcelshop')) {
 				try {
-					$id_branch = Db::getInstance()->getValue('SELECT id FROM '._DB_PREFIX_.'shaim_pplparcelshop_data JOIN '._DB_PREFIX_.'orders USING(id_cart) WHERE id_order=' . (int) $order->id);
+					$id_branch = Db::getInstance()->getValue('SELECT spd.id FROM ' . _DB_PREFIX_ . 'shaim_pplparcelshop_data spd
+					INNER JOIN ' . _DB_PREFIX_ . 'shaim_pplparcelshop sp ON (spd.id = sp.id && spd.type = sp.type)
+					JOIN ' . _DB_PREFIX_ . 'orders USING(id_cart) WHERE id_order=' . (int)$order->id);
 				}catch(Exception $e){}
 				
 				if($id_branch) {
@@ -259,6 +245,7 @@ class balikobotbranches extends Module
 		{
 			if(Module::isInstalled('shaim_baliknapostu')){
 				try {
+					// zde "type" neni treba parovat v query, jelikoz SP ma pouze SP a neresi se tam dalsi zeme
 					$id_branch = Db::getInstance()->getValue('SELECT psc FROM '._DB_PREFIX_.'shaim_baliknapostu_data JOIN '._DB_PREFIX_.'orders USING(id_cart) WHERE id_order=' . (int) $order->id);
 				}
 				catch(Exception $e) {}
